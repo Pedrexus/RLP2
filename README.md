@@ -1,2 +1,2 @@
-# RLP1
-Reinforcement Learning Project 1
+# 🤖 RLP1
+Reinforcement Learning Project 1 🦾
