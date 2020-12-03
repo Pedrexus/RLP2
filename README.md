@@ -4,16 +4,16 @@ Reinforcement Learning Project 1 🦾
 
 ## Create environment
 
-`git clone {url}`
-
-`cd RLP1`
-
-`python -m venv venv`
+```
+git clone https://github.com/Pedrexus/RLP1.git
+cd RLP1
+python -m venv venv
+```
 
 ### activate environment
     
-    - windows: `.\venv\Scripts\activate`
-    - linux/mac: `source ./venv/bin/activate`
+- windows: `.\venv\Scripts\activate`
+- linux/mac: `source ./venv/bin/activate`
 
 ### install dependencies
 
