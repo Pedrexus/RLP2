@@ -9,7 +9,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, state, reward):
+    def observe(self, state, reward):
         """the agent adapts itself based on
         the reward from his last action"""
 

@@ -9,9 +9,11 @@ agent = MonteCarloControl()
 observation = env.reset()
 for _ in range(100):
   env.render()
+
   action = agent.act()
-  observation, reward, done, info = env.step(action)
-  agent.evaluate(observation, reward)
+  state, reward, done, _ = env.step(action)
+
+  agent.observe(state, reward)
 
   if done:
     observation = env.reset()
