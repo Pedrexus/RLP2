@@ -11,27 +11,61 @@ from .abc import Agent
 class MonteCarloControl(Agent):
     """problem specifications:
 
-    - value function: v(t = 0) = 0
+    - value function: v(t = 0) = 0 (ok)
     - step_size: alpha(t) = 1 / N(s_t, a_t)
     - greedy exploration: eps(t) = N_0 / (N_0 + N(s_t)), N_0 = cte
-    - N(s): number of visits of state s
-    - N(s, a): number of times action = a(s)
+    - N(s): number of visits of state s (ok)
+    - N(s, a): number of times action = a(s) (ok)
     - N_0: fitting hyperparameter
     - plot: V*(s) = max_a Q*(s, a)
     """
 
     # hyperparameters - TODO: put it in constructor
-    granularity = 1 # => 4 * 2 * 10^(granularity + 1) possible states
-    gamma = 1
-    eps = .1
     
-    def __init__(self):
+    def __init__(self, initial_value=0, initial_eps=.1, granularity=1):
         self._policy = {}
         self._value = {}
         self._returns = defaultdict(list)
         self._episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
 
         self.trial = 0 # == episode
+
+        # hyperparameters
+        self.initial_value = initial_value
+        self.N0 = initial_eps
+
+        # number of decimal places we use in state
+        # len(state space) = 4 * 2 * 10^(granularity + 1)
+        # the lower, the faster it converges
+        self.granularity = granularity 
+
+    def N(self, state, action=None):
+        """Number of times a state-action pair was visited in the episode"""
+
+        if action is None:
+            return sum(1 for s in self.episode["states"] if s == state)
+        else:
+            return sum(1 for (s, a) in zip(self.episode["states"], self.episode["actions"]) if s == state and a == action)
+
+    @property
+    def current_state(self):
+        try:
+            return self.episode["states"][-1]
+        except IndexError:
+            pass
+    
+    @property
+    def last_action(self):
+        return self.episode["actions"][-1]
+
+    @property
+    def gamma(self):
+        """also called alpha_t step-size"""
+        return 1 / self.N(self.current_state, self.last_action)
+
+    @property
+    def eps(self):
+        return self.N0 / (self.N0 + self.N(self.current_state)) 
 
     def policy(self, state, action):
         """the probability of selecting action A given the state S"""
@@ -48,7 +82,7 @@ class MonteCarloControl(Agent):
         try:
             return self._value[key]
         except KeyError:
-            return 0  # default
+            return self.initial_value
 
     def returns(self, state, action):
         key = (*state, action)
@@ -67,7 +101,7 @@ class MonteCarloControl(Agent):
         victory = 195
 
         # sliding window mean
-        lengths = [len(ep["states"]) for i, ep in self._episodes.items() if i > self.trial - self.window]
+        lengths = [len(ep["states"]) for i, ep in self._episodes.items() if i > self.trial - window]
 
         avg, sigma = int(mean(lengths)), round(std(lengths), 1)
 
@@ -80,12 +114,11 @@ class MonteCarloControl(Agent):
         # Monte Carlos Exploring Starts
         # the first action is random in the episode, but the rest follows the policy
         left, right = 0, 1
-        states = self.episode["states"]
 
-        if not states:  # first action in episode, 'states' is empty
+        if self.current_state is None:  # first action in episode, no 'state' has been seen yet
             return random.choice((left, right))
 
-        p_left = self.policy(states[-1], action=left)
+        p_left = self.policy(self.current_state, action=left)
         if random.uniform(0, 1) < p_left:
             action = left
         else:
@@ -109,6 +142,11 @@ class MonteCarloControl(Agent):
         self.episode["rewards"].append(reward)
 
     def reset(self):
+        # S_T was being observed. Now it is removed.
+        # This causes an error in self.N(self.current_state, self.last_action) == 0
+        # in which current_state = S_T, but last_action = S_T-1
+        del self.episode["states"][-1]
+
         self.evaluate()
         self.trial += 1
         
