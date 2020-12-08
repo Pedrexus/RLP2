@@ -12,8 +12,8 @@ class Agent(ABC):
     def observe(self, state, reward):
         """the agent adapts itself based on
         the reward from his last action"""
+        raise NotImplementedError
 
-    trial = 0 # == episode
-
+    @abstractmethod
     def reset(self):
-        self.trial += 1
+        raise NotImplementedError
