@@ -23,7 +23,6 @@ class MonteCarloControl(Agent):
     # hyperparameters - TODO: put it in constructor
     granularity = 1 # => 4 * 2 * 10^(granularity + 1) possible states
     gamma = 1
-    window = 10
     eps = .1
     
     def __init__(self):
@@ -60,16 +59,22 @@ class MonteCarloControl(Agent):
         return self._episodes[self.trial]
 
     def optimality(self):
-        """this is not the correct definition.
-
-        I want to use the average number of steps 
-        to see if the agent is converging or not  
+        """Solved Requirements:
+        Considered solved when the average return is greater than or equal to
+        195.0 over 100 consecutive trials.
         """
+        window = 100
+        victory = 195
 
         # sliding window mean
         lengths = [len(ep["states"]) for i, ep in self._episodes.items() if i > self.trial - self.window]
 
-        return int(mean(lengths)), round(std(lengths), 1)
+        avg, sigma = int(mean(lengths)), round(std(lengths), 1)
+
+        if avg >= victory:
+            print("VICTORY!")
+
+        return avg, sigma
 
     def act(self):
         # Monte Carlos Exploring Starts
