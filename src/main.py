@@ -1,17 +1,17 @@
 from time import time
 
 import gym
-from agents import MonteCarloControl, Sarsa
+from agents.montecarlo import MonteCarloControl
 
 start = time()
 dt = lambda: int(time() - start)
 
 env = gym.make("CartPole-v1")
-agent = MonteCarloControl(initial_eps=.3)
+agent = MonteCarloControl()
 
 observation = env.reset()
-for i in range(100_000):
-    # this makes everything 100x slower
+for _ in range(100_000):
+    # render makes the loop 100x slower
     # env.render()
 
     action = agent.act()
@@ -25,10 +25,5 @@ for i in range(100_000):
 
         observation = env.reset()
         agent.reset()
-
-mean, std = agent.optimality()
-print(f"loop finished in {dt()}s.")
-print(f"optimality: {mean} +- {std} in {len(agent.episodes)} episodes")
-
 
 env.close()

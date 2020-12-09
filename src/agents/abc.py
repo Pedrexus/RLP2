@@ -2,7 +2,6 @@ import random
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from enum import Enum
 from numpy import mean, std, argmax
 
 
@@ -19,24 +18,27 @@ class Actions:
 class Agent(ABC):
     """Base agent for Open AI gym CartPole V1"""
 
-    action_space = Actions()
-
     # online learning agent:
-    # online = True => evaluation is performed after each step
-    # online = False => evaluation is performed after each episode
+    # online = True => policy evaluation is performed after each step
+    # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, alpha=.15, eps=.1, granularity=1, gamma=1):
+    def __init__(self, initial_value=0, initial_eps=.1, gamma=1, granularity=1):
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
-        self.trial = 0
+        self.trial = 0  # == episode
 
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
 
         # hyperparameters
-        self.alpha = alpha
-        # self.gamma = gamma
+        # self.alpha = alpha
+        self.gamma = gamma
         # self.eps = eps
+        self.N0 = initial_eps
+
+        # number of decimal places we use in state
+        # len(state space) = 4 * 2 * 10^(granularity + 1)
+        # the lower, the faster it converges
         self.granularity = granularity
 
     @property
@@ -71,6 +73,17 @@ class Agent(ABC):
     def last_action(self):
         return self.actions[-1]
 
+    def N(self, state, action=None):
+        """Number of times a state-action pair was visited in the episode"""
+
+        if action is None:
+            return sum(1 for s in self.states if s == state)
+        else:
+            return sum(1 for (s, a) in zip(self.states, self.actions) if s == state and a == action)
+
+    def eps(self, t):
+        return self.N0 / (self.N0 + self.N(self.states[t]))
+
     def optimality(self):
         """Solved Requirements:
 
@@ -97,7 +110,7 @@ class Agent(ABC):
             ])
 
     def act(self):
-        """the agent computes the action based on the current state"""
+        """eps-greedy action"""
 
         # first action in episode, no 'state' has been seen yet
         if self.current_state is None or random.uniform(0, 1) < self.eps(self.step - 1):
