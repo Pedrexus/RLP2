@@ -1,7 +1,7 @@
 from time import time
 
 import gym
-from agents import MonteCarloControl, Sarsa, Q
+from src.agents import MonteCarloControl, Sarsa, Q
 
 start = time()
 dt = lambda: int(time() - start)
@@ -9,12 +9,12 @@ dt = lambda: int(time() - start)
 env = gym.make("CartPole-v1")
 
 # agent = MonteCarloControl(initial_eps=.1)
-agent = Q(initial_eps=.1)
+agent = Q(initial_eps=.1, granularity=3)
 
 state = env.reset()
 agent.observe(state, None)  # S[t = 0]
 
-for _ in range(200_000):
+for _ in range(100_000):
     # render makes the loop 100x slower
     # env.render()
 
