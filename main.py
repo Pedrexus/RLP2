@@ -9,8 +9,8 @@ dt = lambda: int(time() - start)
 env = gym.make("CartPole-v1")
 
 agent = MonteCarloControl(initial_eps=.1)  # 160 - 180
-agent = Q()  # 137 - 156
-agent = DoubleQ()  #
+# agent = Q()  # 137 - 156
+# agent = DoubleQ()  #
 
 state = env.reset()
 agent.observe(state, None)  # S[t = 0]
