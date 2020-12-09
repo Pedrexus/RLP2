@@ -29,11 +29,6 @@ class MonteCarloControl(Agent):
         self._policy = {}
         self.returns = defaultdict(list)
 
-    # @property
-    # def gamma(self):
-    #     """also called alpha_t step-size"""
-    #     return 1 / self.N(self.current_state, self.last_action)
-
     def policy(self, state, action):
         """the probability of selecting action A given the state S"""
         try:
@@ -44,7 +39,7 @@ class MonteCarloControl(Agent):
             return prob[action]
 
     def act(self):
-        """eps-soft action"""
+        """eps-soft policy"""
 
         # Monte Carlos Exploring Starts
         # the first action is random in the episode, but the rest follows the policy

@@ -31,9 +31,7 @@ class Agent(ABC):
         self.value = defaultdict(lambda: initial_value)
 
         # hyperparameters
-        # self.alpha = alpha
         self.gamma = gamma
-        # self.eps = eps
         self.N0 = initial_eps
 
         # number of decimal places we use in state
@@ -60,7 +58,7 @@ class Agent(ABC):
     @property
     def step(self):
         """Theoretically, in the last time step, we only collect Reward"""
-        return len(self.states)
+        return len(self.rewards)
 
     @property
     def current_state(self):
@@ -84,6 +82,9 @@ class Agent(ABC):
     def eps(self, t):
         return self.N0 / (self.N0 + self.N(self.states[t]))
 
+    def alpha(self, t):
+        return 1 / self.N(self.states[t], self.actions[t])
+
     def optimality(self):
         """Solved Requirements:
 
@@ -103,14 +104,23 @@ class Agent(ABC):
 
         return avg, sigma
 
+    def state_value(self, state):
+        return max(
+            self.value[state, Actions.left],
+            self.value[state, Actions.right],
+        )
+
     def greedy_action(self, state):
+        if self.value[state, Actions.left] == self.value[state, Actions.right]:
+            # if draw, select randomly
+            return Actions.sample()
         return argmax([
                 self.value[state, Actions.left],
                 self.value[state, Actions.right],
             ])
 
     def act(self):
-        """eps-greedy action"""
+        """eps-greedy policy"""
 
         # first action in episode, no 'state' has been seen yet
         if self.current_state is None or random.uniform(0, 1) < self.eps(self.step - 1):
@@ -120,9 +130,6 @@ class Agent(ABC):
             action = self.greedy_action(self.current_state)
 
         self.actions.append(action)
-
-        if self.online and self.step > 1:
-            self.evaluate()
         return action
 
     def observe(self, state, reward):
@@ -137,6 +144,9 @@ class Agent(ABC):
         # state(T) is being observed as well
         self.states.append(state)
         self.rewards.append(reward)
+
+        if self.online and self.step > 1:
+            self.evaluate()
 
     def reset(self):
         # S_T was being observed. Now it is removed.
