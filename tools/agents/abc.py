@@ -1,8 +1,11 @@
 import random
+import math
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from numpy import mean, std, argmax
+from numpy import mean, std, argmax, interp
+
+from ..utils import min_max_scale
 
 
 class Actions:
@@ -18,26 +21,38 @@ class Actions:
 class Agent(ABC):
     """Base agent for Open AI gym CartPole V1"""
 
+    # cart pole specific variables
+    # Observation:
+    #     Type: Box(4)
+    #     Num     Observation               Min                     Max
+    #     0       Cart Position             -4.8                    4.8
+    #     1       Cart Velocity             -Inf                    Inf
+    #     2       Pole Angle                -0.418 rad (-24 deg)    0.418 rad (24 deg)
+    #     3       Pole Angular Velocity     -Inf                    Inf
+    upper_bounds = [+4.8, +0.5, +math.radians(24), math.radians(50)]
+    lower_bounds = [-4.8, -0.5, -math.radians(24), -math.radians(50)]
+
     # online learning agent:
     # online = True => policy evaluation is performed after each step
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, initial_eps=.1, gamma=1, granularity=1):
+    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(3, 3, 3, 6)):
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
         self.trial = 0  # == episode
-
-        # the reward expected from taking action A when in state S
-        self.value = defaultdict(lambda: initial_value)
 
         # hyperparameters
         self.gamma = gamma
         self.N0 = initial_eps
 
-        # number of decimal places we use in state
-        # len(state space) = 4 * 2 * 10^(granularity + 1)
-        # the lower, the faster it converges
+        # determines the number of states in the state space
+        # len(state space) = prod(granularity)
+        # the lower each value, the faster it converges,
+        # but too low may never converge
         self.granularity = granularity
+
+         # the reward expected from taking action A when in state S
+        self.value = defaultdict(lambda: initial_value)
 
     @property
     def episode(self):
@@ -85,6 +100,22 @@ class Agent(ABC):
     def alpha(self, t):
         return 1 / self.N(self.states[t], self.actions[t])
 
+    def discretize(self, state):
+        """limits the number of different possible states
+
+        cart-pole observation:
+            [Cart Position, Cart Velocity, Pole Angle, Pole Angular Velocity]
+
+        each entry is mapped to an integer
+        """
+        mew_state = []
+        for obs, lb, ub, grain in zip(state, self.lower_bounds, self.upper_bounds, self.granularity):
+            scaled = min_max_scale(obs, lb, ub)
+            new_obs = int(round(scaled * grain))
+            mew_state.append(new_obs)
+
+        return tuple(mew_state)
+
     def optimality(self):
         """Solved Requirements:
 
@@ -100,7 +131,8 @@ class Agent(ABC):
         avg, sigma = int(mean(lengths)), round(std(lengths), 1)
 
         if avg >= victory:
-            print("VICTORY!")
+            # print("VICTORY!!!")
+            pass
 
         return avg, sigma
 
@@ -121,9 +153,7 @@ class Agent(ABC):
 
     def act(self):
         """eps-greedy policy"""
-
-        # first action in episode, no 'state' has been seen yet
-        if self.current_state is None or random.uniform(0, 1) < self.eps(self.step - 1):
+        if random.uniform(0, 1) < self.eps(self.step - 1):
             action = Actions.sample()
         else:
             # greedy action
@@ -133,16 +163,9 @@ class Agent(ABC):
         return action
 
     def observe(self, state, reward):
-        """the agent observes the environment,
-        storing state and reward
-
-        cart-pole observation:
-            [Cart Position, Cart Velocity, Pole Angle, Pole Angular Velocity]
-        """
-        state = tuple(round(x, self.granularity) for x in state)
-
-        # state(T) is being observed as well
-        self.states.append(state)
+        """the agent observes the environment, storing state and reward"""
+        # terminal state is being observed as well
+        self.states.append(self.discretize(state))
         self.rewards.append(reward)
 
         if self.online and self.step > 1:

@@ -1,15 +1,16 @@
 from time import time
 
 import gym
-from src.agents import MonteCarloControl, Sarsa, Q
+from tools.agents import MonteCarloControl, Sarsa, Q, DoubleQ
 
 start = time()
 dt = lambda: int(time() - start)
 
 env = gym.make("CartPole-v1")
 
-# agent = MonteCarloControl(initial_eps=.1)
-agent = Q(initial_eps=.1, granularity=3)
+agent = MonteCarloControl(initial_eps=.1)  # 160 - 180
+agent = Q()  # 137 - 156
+agent = DoubleQ()  #
 
 state = env.reset()
 agent.observe(state, None)  # S[t = 0]
