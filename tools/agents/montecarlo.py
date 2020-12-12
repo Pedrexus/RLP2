@@ -24,10 +24,12 @@ class MonteCarloControl(Agent):
 
     online = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, seed=7, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._policy = {}
         self.returns = defaultdict(list)
+
+        random.seed(seed)
 
     def policy(self, state, action):
         """the probability of selecting action A given the state S"""
@@ -76,3 +78,4 @@ class MonteCarloControl(Agent):
                     greedy_action: 1 - self.eps(t) + self.eps(t) / 2,
                     int(not greedy_action): self.eps(t) / 2
                 }
+                

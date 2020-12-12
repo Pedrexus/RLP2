@@ -3,7 +3,7 @@ import math
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from numpy import mean, std, argmax, interp
+from numpy import mean, std, argmax, interp, digitize, linspace
 
 from ..utils import min_max_scale
 
@@ -16,6 +16,10 @@ class Actions:
     @classmethod
     def sample(cls) -> int:
         return random.choice([cls.left, cls.right])
+    
+    @property
+    def space(self):
+        return [Actions.left, Actions.right]
 
 
 class Agent(ABC):
@@ -37,7 +41,7 @@ class Agent(ABC):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(3, 3, 3, 6)):
+    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(3, 3, 3, 6), seed=7):
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
         self.trial = 0  # == episode
 
@@ -50,9 +54,14 @@ class Agent(ABC):
         # the lower each value, the faster it converges,
         # but too low may never converge
         self.granularity = granularity
+        self.state_space = []
+        for gran, lb, ub in zip(self.granularity, self.lower_bounds, self.upper_bounds):
+            self.state_space.append(linspace(lb, ub, gran))
 
          # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
+
+        random.seed(seed)
 
     @property
     def episode(self):
@@ -76,6 +85,13 @@ class Agent(ABC):
         return len(self.rewards)
 
     @property
+    def past_state(self):
+        try:
+            return self.states[-2]
+        except IndexError:
+            pass
+
+    @property
     def current_state(self):
         try:
             return self.states[-1]
@@ -85,6 +101,13 @@ class Agent(ABC):
     @property
     def last_action(self):
         return self.actions[-1]
+
+    @property
+    def current_reward(self):
+        try:
+            return self.rewards[-1]
+        except IndexError:
+            pass
 
     def N(self, state, action=None):
         """Number of times a state-action pair was visited in the episode"""
@@ -109,11 +132,15 @@ class Agent(ABC):
         each entry is mapped to an integer
         """
         mew_state = []
-        for obs, lb, ub, grain in zip(state, self.lower_bounds, self.upper_bounds, self.granularity):
-            scaled = min_max_scale(obs, lb, ub)
-            new_obs = int(round(scaled * grain))
-            mew_state.append(new_obs)
+        for space, obs in zip(self.state_space, state):
+            mew_state.append(int(digitize(obs, space)))
 
+        # # Deixei a implementação aqui caso queira voltar a usa-la
+        
+        # for obs, lb, ub, grain in zip(state, self.lower_bounds, self.upper_bounds, self.granularity):
+        #     scaled = min_max_scale(obs, lb, ub)
+        #     new_obs = int(round(scaled * grain))
+        #     mew_state.append(new_obs)
         return tuple(mew_state)
 
     def optimality(self):
