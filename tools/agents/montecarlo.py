@@ -57,6 +57,22 @@ class MonteCarloControl(Agent):
         self.actions.append(action)
         return action
 
+    def N(self, state, action=None):
+        """Number of times a state-action pair was visited in all the episode"""
+        # only counts first visit
+
+        if action is None:
+            N = 0
+            for episode in self.episodes:
+                if state in self.episodes[episode]['states']:
+                    N += 1
+        else:
+            N = 0
+            for episode in self.episodes:
+                if (state, action) in zip(self.episodes[episode]['states'], self.episodes[episode]['actions']):
+                    N += 1
+        return N
+
     def evaluate(self):
         S, A, R = self.states, self.actions, self.rewards
 
@@ -65,11 +81,11 @@ class MonteCarloControl(Agent):
             G = self.gamma * G + R[t + 1]
             if (S[t], A[t]) not in zip(S[:t], A[:t]):  # first-visit
                 self.returns[S[t], A[t]].append(G)
-                self.value[S[t], A[t]] = mean(self.returns[S[t], A[t]])  # average among all episodes
+                # self.value[S[t], A[t]] = mean(self.returns[S[t], A[t]])  # average among all episodes
                 
                 # a professora pediu assim, mas dai piora muito...
                 # se usar mean(returns) melhora um pouco
-                # self.value[S[t], A[t]] += self.alpha(t) * (G - self.value[S[t], A[t]])
+                self.value[S[t], A[t]] += self.alpha(t) * (G - self.value[S[t], A[t]])
                 
 
                 greedy_action = self.greedy_action(S[t])

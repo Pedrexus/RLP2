@@ -12,8 +12,8 @@ RANDOM_SEED = 2
 env = gym.make("CartPole-v1")
 env.seed(RANDOM_SEED)
 
-# agent = MonteCarloControl(initial_eps=.1, seed=RANDOM_SEED)  # 160 - 180
-agent = Sarsa(initial_eps=.1, seed=RANDOM_SEED)
+agent = MonteCarloControl(initial_eps=1, seed=RANDOM_SEED)  # 160 - 180
+# agent = Sarsa(initial_eps=.1, seed=RANDOM_SEED)
 # agent = Q()  # 137 - 156
 # agent = DoubleQ()  #
 
