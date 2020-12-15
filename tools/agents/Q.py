@@ -18,7 +18,7 @@ class Q(Agent):
     def evaluate(self):
         t = self.step - 2
         S, A, R = self.states, self.actions, self.rewards
-        assert len(S) == len(A) + 1 == len(R), f"S: {len(S)} A: {len(A)} R: {len(R)}"
+        # assert len(S) == len(A) + 1 == len(R), f"S: {len(S)} A: {len(A)} R: {len(R)}"
 
         self.value[S[t], A[t]] += self.alpha(t) * (
                 R[t + 1]

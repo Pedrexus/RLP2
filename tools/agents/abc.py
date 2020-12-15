@@ -39,7 +39,7 @@ class Agent(ABC):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(3, 3, 3, 6), seed=7):
+    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(2, 2, 3, 6), seed=7):
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
         self.trial = 0  # == episode
 
@@ -114,7 +114,7 @@ class Agent(ABC):
         # else:
         #     return sum(1 for episode in self.episodes.values() if state in episode["states"] and action in episode["actions"])
 
-        """Number of times a state-action pair was visited in all the episodes"""
+        """Number of times a state-action pair was visited in the episode"""
         if action is None:
             return sum(1 for s in self.states if s == state)
         else:
