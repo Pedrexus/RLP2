@@ -5,8 +5,6 @@ from collections import defaultdict
 
 from numpy import mean, std, argmax, interp, digitize, linspace
 
-from ..utils import min_max_scale
-
 
 class Actions:
     """Open AI gym CartPole v1 action space"""
@@ -110,8 +108,13 @@ class Agent(ABC):
             pass
 
     def N(self, state, action=None):
-        """Number of times a state-action pair was visited in the episode"""
+        """Number of episodes the state-action pair was visted at least once"""
+        # if action is None:
+        #     return sum(1 for episode in self.episodes.values() if state in episode["states"])
+        # else:
+        #     return sum(1 for episode in self.episodes.values() if state in episode["states"] and action in episode["actions"])
 
+        """Number of times a state-action pair was visited in all the episodes"""
         if action is None:
             return sum(1 for s in self.states if s == state)
         else:
@@ -123,25 +126,15 @@ class Agent(ABC):
     def alpha(self, t):
         return 1 / self.N(self.states[t], self.actions[t])
 
-    def discretize(self, state):
+    def digitize(self, state):
         """limits the number of different possible states
 
         cart-pole observation:
             [Cart Position, Cart Velocity, Pole Angle, Pole Angular Velocity]
 
-        each entry is mapped to an integer
+        each entry is mapped into an integer
         """
-        mew_state = []
-        for space, obs in zip(self.state_space, state):
-            mew_state.append(int(digitize(obs, space)))
-
-        # # Deixei a implementação aqui caso queira voltar a usa-la
-        
-        # for obs, lb, ub, grain in zip(state, self.lower_bounds, self.upper_bounds, self.granularity):
-        #     scaled = min_max_scale(obs, lb, ub)
-        #     new_obs = int(round(scaled * grain))
-        #     mew_state.append(new_obs)
-        return tuple(mew_state)
+        return tuple(digitize(obs, space) for space, obs in zip(self.state_space, state))
 
     def optimality(self):
         """Solved Requirements:
@@ -192,7 +185,7 @@ class Agent(ABC):
     def observe(self, state, reward):
         """the agent observes the environment, storing state and reward"""
         # terminal state is being observed as well
-        self.states.append(self.discretize(state))
+        self.states.append(self.digitize(state))
         self.rewards.append(reward)
 
         if self.online and self.step > 1:
@@ -217,3 +210,41 @@ class Agent(ABC):
         the agent adapts itself based on previous rewards
         """
         raise NotImplementedError
+
+
+class EpsSoftMixin(ABC):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._policy = {}
+
+    def policy(self, state, action):
+        """the probability of selecting action A given the state S"""
+        try:
+            prob = self._policy[state]
+        except KeyError:
+            return random.uniform(0, 1)
+        else:
+            return prob[action]
+
+    def act(self):
+        """eps-soft policy"""
+        
+        if self.current_state is None:  # first action in episode, no 'state' has been seen yet
+            return Actions.sample()
+        
+        p_left = self.policy(self.current_state, action=Actions.left)
+        
+        if random.uniform(0, 1) < p_left:
+            action = Actions.left
+        else:
+            action = Actions.right
+        
+        self.actions.append(action)
+        return action
+
+    def update_policy(state, greedy_action):
+        self._policy[state] = {
+                    greedy_action: 1 - self.eps(t) + self.eps(t) / 2,
+                    int(not greedy_action): self.eps(t) / 2
+                }
