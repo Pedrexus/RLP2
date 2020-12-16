@@ -15,7 +15,7 @@ env.seed(RANDOM_SEED)
 
 agent = MonteCarloControl(initial_eps=1, seed=RANDOM_SEED, granularity=(0, 0, 200, 3))  # best granularity = (0, 1, 3, 6)
 # agent = Sarsa(initial_eps=.1, seed=RANDOM_SEED)
-# agent = Q(initial_eps=.4, granularity=(2, 2, 3, 12), seed=RANDOM_SEED)
+agent = Q(initial_eps=.1, granularity=(0, 0, 20, 10), seed=RANDOM_SEED)
 
 state = env.reset()
 agent.observe(state, None)  # S[t = 0]
@@ -42,3 +42,5 @@ mean, std = agent.optimality()
 print(f"optimality: {mean} +- {std} in {len(agent.episodes)} episodes (time: {dt()}s)")
 
 env.close()
+
+agent.plot_colormesh()

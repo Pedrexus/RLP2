@@ -225,6 +225,7 @@ class Agent(ABC):
     def plot_colormesh(self, axis=0):
         plt.pcolormesh(self.state_value_array)
         plt.colorbar()
+        plt.show()
 
     def plot_surface(self, axis=0, *args, **kwargs):
         shape = self.state_value_array.shape
@@ -237,6 +238,7 @@ class Agent(ABC):
         ax = fig.gca(projection='3d')
         surface = ax.plot_surface(x, y, z, rstride=1, cstride=1, linewidth=0, cmap='viridis', antialiased=False)
         fig.colorbar(surface, shrink=0.5, aspect=5)
+        plt.show()
 
 
 class EpsSoftMixin(ABC):
