@@ -8,14 +8,14 @@ start = time()
 dt = lambda: int(time() - start)
 
 # Reproducibility
-RANDOM_SEED = 3 # good in MC
+RANDOM_SEED = 5  # good in MC
 
 env = gym.make("CartPole-v1")
 env.seed(RANDOM_SEED)
 
-agent = MonteCarloControl(initial_eps=1, seed=RANDOM_SEED)  # 160 - 180
+agent = MonteCarloControl(initial_eps=1, seed=RANDOM_SEED, granularity=(0, 0, 200, 3))  # best granularity = (0, 1, 3, 6)
 # agent = Sarsa(initial_eps=.1, seed=RANDOM_SEED)
-agent = Q(initial_eps=.4, seed=RANDOM_SEED)
+# agent = Q(initial_eps=.4, granularity=(2, 2, 3, 12), seed=RANDOM_SEED)
 
 state = env.reset()
 agent.observe(state, None)  # S[t = 0]

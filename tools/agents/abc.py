@@ -1,9 +1,12 @@
-import random
 import math
+import random
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import cached_property
+from itertools import product
 
-from numpy import mean, std, argmax, interp, digitize, linspace
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Actions:
@@ -11,13 +14,11 @@ class Actions:
     left = 0
     right = 1
 
+    space = (left, right)
+
     @classmethod
     def sample(cls) -> int:
         return random.choice([cls.left, cls.right])
-    
-    @property
-    def space(self):
-        return [Actions.left, Actions.right]
 
 
 class Agent(ABC):
@@ -39,7 +40,9 @@ class Agent(ABC):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(2, 2, 3, 6), seed=7):
+    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(2, 2, 3, 6), seed=1):
+        random.seed(seed)
+
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
         self.trial = 0  # == episode
 
@@ -52,14 +55,10 @@ class Agent(ABC):
         # the lower each value, the faster it converges,
         # but too low may never converge
         self.granularity = granularity
-        self.state_space = []
-        for gran, lb, ub in zip(self.granularity, self.lower_bounds, self.upper_bounds):
-            self.state_space.append(linspace(lb, ub, gran))
+        self.state_space = [np.linspace(lb, ub, gran) for lb, ub, gran in zip(self.lower_bounds, self.upper_bounds, self.granularity)]
 
-         # the reward expected from taking action A when in state S
+        # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
-
-        random.seed(seed)
 
     @property
     def episode(self):
@@ -120,11 +119,11 @@ class Agent(ABC):
         else:
             return sum(1 for (s, a) in zip(self.states, self.actions) if s == state and a == action)
 
-    def eps(self, t):
-        return self.N0 / (self.N0 + self.N(self.states[t]))
+    def eps(self, state):
+        return self.N0 / (self.N0 + self.N(state))
 
-    def alpha(self, t):
-        return 1 / self.N(self.states[t], self.actions[t])
+    def alpha(self, state, action):
+        return 1 / self.N(state, action)
 
     def digitize(self, state):
         """limits the number of different possible states
@@ -134,7 +133,7 @@ class Agent(ABC):
 
         each entry is mapped into an integer
         """
-        return tuple(digitize(obs, space) for space, obs in zip(self.state_space, state))
+        return tuple(np.digitize(obs, space) for space, obs in zip(self.state_space, state))
 
     def optimality(self):
         """Solved Requirements:
@@ -148,7 +147,7 @@ class Agent(ABC):
         # sliding window mean
         lengths = [len(ep["rewards"]) for i, ep in self.episodes.items() if i > self.trial - window]
 
-        avg, sigma = int(mean(lengths)), round(std(lengths), 1)
+        avg, sigma = int(np.mean(lengths)), round(np.std(lengths), 1)
 
         if avg >= victory:
             # print("VICTORY!!!")
@@ -166,14 +165,14 @@ class Agent(ABC):
         if self.value[state, Actions.left] == self.value[state, Actions.right]:
             # if draw, select randomly
             return Actions.sample()
-        return argmax([
-                self.value[state, Actions.left],
-                self.value[state, Actions.right],
-            ])
+        return np.argmax([
+            self.value[state, Actions.left],
+            self.value[state, Actions.right],
+        ])
 
     def act(self):
         """eps-greedy policy"""
-        if random.uniform(0, 1) < self.eps(self.step - 1):
+        if random.uniform(0, 1) < self.eps(self.current_state):
             action = Actions.sample()
         else:
             # greedy action
@@ -211,6 +210,34 @@ class Agent(ABC):
         """
         raise NotImplementedError
 
+    @cached_property
+    def state_value_array(self):
+        shape = [g + 1 for g in self.granularity]
+        value = np.zeros(shape)
+
+        state_space_full = [(obs if obs.size > 0 else [0]) for obs in self.state_space]
+        for state in product(*state_space_full):
+            dig_state = self.digitize(state)
+            value[dig_state] = self.state_value(dig_state)
+
+        return value.reshape([x for x in shape if x > 1])
+
+    def plot_colormesh(self, axis=0):
+        plt.pcolormesh(self.state_value_array)
+        plt.colorbar()
+
+    def plot_surface(self, axis=0, *args, **kwargs):
+        shape = self.state_value_array.shape
+        assert len(shape) == 2, f"Unable to make surface of tensor with rank {shape}"
+
+        x, y = np.meshgrid(range(shape[0]), range(shape[1]))
+        z = self.state_value_array
+
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        surface = ax.plot_surface(x, y, z, rstride=1, cstride=1, linewidth=0, cmap='viridis', antialiased=False)
+        fig.colorbar(surface, shrink=0.5, aspect=5)
+
 
 class EpsSoftMixin(ABC):
 
@@ -229,22 +256,22 @@ class EpsSoftMixin(ABC):
 
     def act(self):
         """eps-soft policy"""
-        
+
         if self.current_state is None:  # first action in episode, no 'state' has been seen yet
             return Actions.sample()
-        
+
         p_left = self.policy(self.current_state, action=Actions.left)
-        
+
         if random.uniform(0, 1) < p_left:
             action = Actions.left
         else:
             action = Actions.right
-        
+
         self.actions.append(action)
         return action
 
     def update_policy(state, greedy_action):
         self._policy[state] = {
-                    greedy_action: 1 - self.eps(t) + self.eps(t) / 2,
-                    int(not greedy_action): self.eps(t) / 2
-                }
+            greedy_action: 1 - self.eps(t) + self.eps(t) / 2,
+            int(not greedy_action): self.eps(t) / 2
+        }

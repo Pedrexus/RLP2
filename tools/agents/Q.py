@@ -20,7 +20,7 @@ class Q(Agent):
         S, A, R = self.states, self.actions, self.rewards
         # assert len(S) == len(A) + 1 == len(R), f"S: {len(S)} A: {len(A)} R: {len(R)}"
 
-        self.value[S[t], A[t]] += self.alpha(t) * (
+        self.value[S[t], A[t]] += self.alpha(S[t], A[t]) * (
                 R[t + 1]
                 + self.gamma * self.state_value(S[t + 1])
                 - self.value[S[t], A[t]]
