@@ -26,9 +26,11 @@ granularity = [
 trials, best = MonteCarloControl.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
 
 N0 = best.pop('N0')
-granularity = best.values()
+granularity = list(best.values())
 
-MonteCarloControl.routine(env, seed=RANDOM_SEED, hyparams=(N0, granularity))
+result = MonteCarloControl.routine(env, seed=RANDOM_SEED, hyparams=(N0, granularity))
+
+print(f"best result = {result} with N0 = {N0} and granularity = {granularity}")
 
 # MonteCarlo:
 # best = {'N0': 0.1301054873136729, 'cart_position': 0, 'cart_velocity': 1, 'pole_angle': 3, 'pole_angular_velocity': 2}
