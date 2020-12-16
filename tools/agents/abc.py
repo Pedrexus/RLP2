@@ -1,12 +1,14 @@
 import math
 import random
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import defaultdict, Counter
 from functools import cached_property
 from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from ..utils.tuning import TunerMixin
 
 
 class Actions:
@@ -21,7 +23,7 @@ class Actions:
         return random.choice([cls.left, cls.right])
 
 
-class Agent(ABC):
+class Agent(ABC, TunerMixin):
     """Base agent for Open AI gym CartPole V1"""
 
     # cart pole specific variables
@@ -40,7 +42,7 @@ class Agent(ABC):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, initial_value=0, initial_eps=.1, gamma=.8, granularity=(2, 2, 3, 6), seed=1):
+    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), initial_value=0, gamma=.8, seed=1):
         random.seed(seed)
 
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
@@ -48,7 +50,7 @@ class Agent(ABC):
 
         # hyperparameters
         self.gamma = gamma
-        self.N0 = initial_eps
+        self.N0 = N0
 
         # determines the number of states in the state space
         # len(state space) = prod(granularity)
@@ -59,6 +61,7 @@ class Agent(ABC):
 
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
+        self.counter = defaultdict(lambda: Counter())
 
     @property
     def episode(self):
@@ -106,6 +109,10 @@ class Agent(ABC):
         except IndexError:
             pass
 
+    def count(self):
+        self.counter["states"][self.current_state] += 1
+        self.counter["state-actions"][self.current_state, self.last_action] += 1
+
     def N(self, state, action=None):
         """Number of episodes the state-action pair was visted at least once"""
         # if action is None:
@@ -115,9 +122,9 @@ class Agent(ABC):
 
         """Number of times a state-action pair was visited in the episode"""
         if action is None:
-            return sum(1 for s in self.states if s == state)
+            return self.counter["states"][state]
         else:
-            return sum(1 for (s, a) in zip(self.states, self.actions) if s == state and a == action)
+            return self.counter["state-actions"][state, action]
 
     def eps(self, state):
         return self.N0 / (self.N0 + self.N(state))
@@ -135,25 +142,26 @@ class Agent(ABC):
         """
         return tuple(np.digitize(obs, space) for space, obs in zip(self.state_space, state))
 
+    window = 100
+    victory = 195
+
     def optimality(self):
         """Solved Requirements:
 
         Considered solved when the average return is greater than or equal to
         195.0 over 100 consecutive trials.
         """
-        window = 100
-        victory = 195
 
         # sliding window mean
-        lengths = [len(ep["rewards"]) for i, ep in self.episodes.items() if i > self.trial - window]
+        lengths = [len(ep["rewards"]) for i, ep in self.episodes.items() if i > self.trial - self.window]
 
-        avg, sigma = int(np.mean(lengths)), round(np.std(lengths), 1)
-
-        if avg >= victory:
-            # print("VICTORY!!!")
-            pass
+        avg, sigma = np.floor(np.mean(lengths)), round(np.std(lengths), 1)
 
         return avg, sigma
+
+    def won(self):
+        avg, _ = self.optimality()
+        return avg > self.victory
 
     def state_value(self, state):
         return max(
@@ -179,6 +187,8 @@ class Agent(ABC):
             action = self.greedy_action(self.current_state)
 
         self.actions.append(action)
+
+        self.count()
         return action
 
     def observe(self, state, reward):
