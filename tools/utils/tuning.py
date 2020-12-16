@@ -1,6 +1,6 @@
 import time
 
-from hyperopt import tpe, hp, STATUS_OK, Trials, fmin
+from hyperopt import tpe, STATUS_OK, Trials, fmin
 
 
 class TunerMixin:
@@ -9,11 +9,14 @@ class TunerMixin:
     epochs = 10_000
 
     @classmethod
-    def routine(cls, env, seed, hyparams):
+    def routine(cls, env, hyparams, seed):
         """reinforcement learning routine"""
 
         # startup agent
-        agent = cls(*hyparams, seed=seed)
+        agent = cls(*hyparams)
+
+        env.seed(seed)
+        agent.seed(seed)
 
         state = env.reset()
         agent.observe(state, None)  # S[t = 0]
@@ -44,13 +47,7 @@ class TunerMixin:
         def objective(hyparams):
             """the function to be minimized"""
             start = time.time()
-
-            result = cls.routine(env, seed, hyparams)
-            perf_time = time.time() - start
-
-            # use relative loss
-            loss = - result / perf_time
-            return {'loss': loss, 'status': STATUS_OK, 'eval_time': perf_time}
+            return {'loss': - cls.routine(env, hyparams, seed), 'status': STATUS_OK, 'eval_time': time.time() - start}
 
         trials = Trials()
 

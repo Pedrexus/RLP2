@@ -42,8 +42,8 @@ class Agent(ABC, TunerMixin):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), initial_value=0, gamma=.8, seed=1):
-        random.seed(seed)
+    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), initial_value=0, gamma=.8):
+        self._seed = None
 
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
         self.trial = 0  # == episode
@@ -62,6 +62,11 @@ class Agent(ABC, TunerMixin):
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
         self.counter = defaultdict(lambda: Counter())
+
+    def seed(self, seed):
+        self._seed = seed
+        random.seed(seed)
+        np.random.seed(seed)
 
     @property
     def episode(self):
