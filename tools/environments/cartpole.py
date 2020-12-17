@@ -3,7 +3,7 @@ import math
 from gym.envs.classic_control import CartPoleEnv
 
 
-class CartPoleEnvHard(CartPoleEnv):
+class CartPoleEnvConstrained(CartPoleEnv):
     """cart pole env with smaller limits"""
 
     def __init__(self):
