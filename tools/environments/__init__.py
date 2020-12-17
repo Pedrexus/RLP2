@@ -1,16 +1,16 @@
 import gym
 from gym.envs.registration import register
 
-from .cartpole import CartPoleEnvConstrained
+from .cartpole import CartPoleEnv_RewardInversion
 
 spec = gym.spec("CartPole-v1")
-kwargs = {
+kwargs_v1 = {
     "max_episode_steps": spec.max_episode_steps,
     "reward_threshold": spec.reward_threshold
 }
 
 register(
-    id='CartPole-v1-constrained',
-    entry_point=CartPoleEnvConstrained,
-    **kwargs
+    id='CartPole-v2',
+    entry_point=CartPoleEnv_RewardInversion,
+    **kwargs_v1
 )

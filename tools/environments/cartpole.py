@@ -1,14 +1,12 @@
-import math
-
+from gym import logger
 from gym.envs.classic_control import CartPoleEnv
 
 
-class CartPoleEnvConstrained(CartPoleEnv):
-    """cart pole env with smaller limits"""
+class CartPoleEnv_RewardInversion(CartPoleEnv):
+    """cart pole env with different reward function"""
 
-    def __init__(self):
-        super().__init__()
+    def step(self, action):
+        state, _, done, info = super().step(action)
 
-        # Angle at which to fail the episode
-        self.theta_threshold_radians = math.radians(9)
-        self.x_threshold = 1.9
+        reward = -1 if done else 0
+        return state, reward, done, info

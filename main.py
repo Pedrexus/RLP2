@@ -11,7 +11,7 @@ dt = lambda: int(time() - start)
 # Reproducibility
 RANDOM_SEED = 5  # good in MC
 
-env = gym.make("CartPole-v1-constrained")
+env = gym.make("CartPole-v2")
 
 # lookup space
 N0 = hp.uniform('N0', 0, 1)
