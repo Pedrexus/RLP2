@@ -1,4 +1,3 @@
-from gym import logger
 from gym.envs.classic_control import CartPoleEnv
 
 
@@ -10,3 +9,9 @@ class CartPoleEnv_RewardInversion(CartPoleEnv):
 
         reward = -1 if done else 0
         return state, reward, done, info
+
+
+class CartPoleEnv_DragForce(CartPoleEnv):
+    """TODO: cart pole env with drag"""
+
+

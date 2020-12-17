@@ -9,9 +9,9 @@ start = time()
 dt = lambda: int(time() - start)
 
 # Reproducibility
-RANDOM_SEED = 5  # good in MC
+RANDOM_SEED = 1234
 
-env = gym.make("CartPole-v2")
+env = gym.make("CartPole-reward-v1")
 
 # lookup space
 N0 = hp.uniform('N0', 0, 1)
@@ -22,12 +22,12 @@ granularity = [
     hp.randint('pole_angular_velocity', 12),
 ]
 
-trials, best = Q.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
+trials, best = MonteCarloControl.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
 
 N0 = best.pop('N0')
 granularity = list(best.values())
 
-agent = Q.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED)
+agent = MonteCarloControl.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED)
 
 print(f"best result = {agent.optimality()[0]} with N0 = {N0} and granularity = {granularity}")
 

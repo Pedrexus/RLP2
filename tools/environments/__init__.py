@@ -10,7 +10,7 @@ kwargs_v1 = {
 }
 
 register(
-    id='CartPole-v2',
+    id='CartPole-reward-v1',
     entry_point=CartPoleEnv_RewardInversion,
     **kwargs_v1
 )
