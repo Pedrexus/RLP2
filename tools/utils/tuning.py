@@ -37,9 +37,7 @@ class TunerMixin:
                 agent.observe(state, None)  # S[t = 0]
 
         env.close()
-
-        mean, _ = agent.optimality()
-        return mean  # this is what we maximize
+        return agent
 
     @classmethod
     def tune(cls, env, space, max_evals=100, seed=1):
@@ -47,7 +45,11 @@ class TunerMixin:
         def objective(hyparams):
             """the function to be minimized"""
             start = time.time()
-            return {'loss': - cls.routine(env, hyparams, seed), 'status': STATUS_OK, 'eval_time': time.time() - start}
+
+            agent = cls.routine(env, hyparams, seed)
+
+            avg, _ = agent.optimality()
+            return {'loss': - avg, 'status': STATUS_OK, 'eval_time': time.time() - start}
 
         trials = Trials()
 

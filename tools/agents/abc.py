@@ -5,6 +5,7 @@ from collections import defaultdict, Counter
 from functools import cached_property
 from itertools import product
 
+import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -148,7 +149,7 @@ class Agent(ABC, TunerMixin):
         return tuple(np.digitize(obs, space) for space, obs in zip(self.state_space, state))
 
     window = 100
-    victory = 195
+    victory = gym.spec("CartPole-v1").reward_threshold  # 475
 
     def optimality(self):
         """Solved Requirements:
