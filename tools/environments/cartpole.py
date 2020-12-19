@@ -20,8 +20,8 @@ class FrictionCartPoleEnv(CartPoleEnv):
 
     def __init__(self):
         super().__init__()
-        self.mu_cart = .1  # cart friction coefficient
-        self.mu_pole = .1  # pole friction coefficient
+        self.mu_cart = .1  # cart friction coefficient < 1
+        self.mu_pole = .1  # pole friction coefficient < 1
 
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
@@ -40,6 +40,8 @@ class FrictionCartPoleEnv(CartPoleEnv):
 
         # For the interested reader:
         # https://coneural.org/florian/papers/05_cart_pole.pdf
+
+        # TODO: fix the bug - quando mu é muito pequeno, o Q learning converge mais rapido do que o CartPole sem atrito e isso n faz sentido.
         Nc = self.total_mass * self.gravity - self.polemass_length * (thetaacc * sintheta + theta_dot ** 2 * costheta)
         friction = self.mu_cart * np.sign(Nc * x_dot)
 
