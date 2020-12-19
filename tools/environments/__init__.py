@@ -1,7 +1,7 @@
 import gym
 from gym.envs.registration import register
 
-from .cartpole import CartPoleEnv_RewardInversion
+from .cartpole import RewardInversionCartPoleEnv, FrictionCartPoleEnv
 
 spec = gym.spec("CartPole-v1")
 kwargs_v1 = {
@@ -11,6 +11,12 @@ kwargs_v1 = {
 
 register(
     id='CartPole-reward-v1',
-    entry_point=CartPoleEnv_RewardInversion,
+    entry_point=RewardInversionCartPoleEnv,
+    **kwargs_v1
+)
+
+register(
+    id='CartPole-friction-v1',
+    entry_point=FrictionCartPoleEnv,
     **kwargs_v1
 )

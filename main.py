@@ -11,15 +11,15 @@ dt = lambda: int(time() - start)
 # Reproducibility
 RANDOM_SEED = 1234
 
-env = gym.make("CartPole-reward-v1")
+env = gym.make("CartPole-friction-v1")
 
 # lookup space
 N0 = hp.uniform('N0', 0, 1)
 granularity = [
     hp.randint('cart_position', 5),  # btw 0 and 5
     hp.randint('cart_velocity', 5),
-    hp.randint('pole_angle', 12),
-    hp.randint('pole_angular_velocity', 12),
+    hp.randint('pole_angle', 16),
+    hp.randint('pole_angular_velocity', 16),
 ]
 
 trials, best = MonteCarloControl.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
