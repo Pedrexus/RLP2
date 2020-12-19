@@ -22,17 +22,7 @@ class MonteCarloControl(Agent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._policy = {}
         self.returns = defaultdict(list)
-
-    def policy(self, state, action):
-        """the probability of selecting action A given the state S"""
-        try:
-            prob = self._policy[state]
-        except KeyError:
-            return random.uniform(0, 1)
-        else:
-            return prob[action]
 
     def evaluate(self):
         S, A, R = self.states, self.actions, self.rewards
@@ -47,6 +37,3 @@ class MonteCarloControl(Agent):
                 # a professora pediu assim, mas dai piora muito...
                 # se usar mean(returns) melhora um pouco
                 # self.value[S[t], A[t]] += self.alpha(t) * (G - self.value[S[t], A[t]])
-
-                
-                

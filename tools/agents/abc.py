@@ -2,7 +2,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 from collections import defaultdict, Counter
-from functools import cached_property
+from cached_property import cached_property
 from itertools import product
 
 import gym
@@ -35,8 +35,8 @@ class Agent(ABC, TunerMixin):
     #     1       Cart Velocity             -Inf                    Inf
     #     2       Pole Angle                -0.418 rad (-24 deg)    0.418 rad (24 deg)
     #     3       Pole Angular Velocity     -Inf                    Inf
-    upper_bounds = [+4.8, +0.5, +math.radians(24), math.radians(50)]
-    lower_bounds = [-4.8, -0.5, -math.radians(24), -math.radians(50)]
+    upper_bounds = [+4.8, +1.0, +math.radians(12), math.radians(50)]
+    lower_bounds = [-4.8, -1.0, -math.radians(12), -math.radians(50)]
 
     # online learning agent:
     # online = True => policy evaluation is performed after each step
@@ -257,6 +257,7 @@ class Agent(ABC, TunerMixin):
         plt.show()
 
 
+# deprecated
 class EpsSoftMixin(ABC):
 
     def __init__(self, *args, **kwargs):

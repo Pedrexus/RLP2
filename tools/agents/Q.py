@@ -27,6 +27,7 @@ class Q(Agent):
         )
 
 
+# deprecated
 class DoubleQ(Q):
     
     def __init__(self, *args, initial_value=0, **kwargs):

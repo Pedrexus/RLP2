@@ -2,3 +2,4 @@ gym
 numpy<=1.19.3
 matplotlib
 hyperopt
+cached-property
