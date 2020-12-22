@@ -9,11 +9,11 @@ class TunerMixin:
     epochs = 50_000
 
     @classmethod
-    def routine(cls, env, hyparams, seed):
+    def routine(cls, env, hyparams, seed, VFA=False):
         """reinforcement learning routine"""
 
         # startup agent
-        agent = cls(*hyparams)
+        agent = cls(*hyparams, VFA=VFA)
 
         env.seed(seed)
         agent.seed(seed)
@@ -40,13 +40,13 @@ class TunerMixin:
         return agent
 
     @classmethod
-    def tune(cls, env, space, max_evals=100, seed=1):
+    def tune(cls, env, space, max_evals=100, seed=1, VFA=False):
 
         def objective(hyparams):
             """the function to be minimized"""
             start = time.time()
 
-            agent = cls.routine(env, hyparams, seed)
+            agent = cls.routine(env, hyparams, seed, VFA)
 
             avg, _ = agent.optimality()
             return {'loss': - avg, 'status': STATUS_OK, 'eval_time': time.time() - start}

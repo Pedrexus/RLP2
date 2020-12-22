@@ -43,7 +43,7 @@ class Agent(ABC, TunerMixin):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), initial_value=0, gamma=.8):
+    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), VFA=False, initial_value=0, gamma=.8):
         self._seed = None
 
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
@@ -59,6 +59,19 @@ class Agent(ABC, TunerMixin):
         # but too low may never converge
         self.granularity = granularity
         self.state_space = [np.linspace(lb, ub, gran) for lb, ub, gran in zip(self.lower_bounds, self.upper_bounds, self.granularity)]
+
+        # using value function approximator?
+        self.VFA = VFA
+        self.state_action_feature = {}
+        self.n_state_actions = 0
+        for s0 in range(granularity[0]+1):
+            for s1 in range(granularity[1]+1):
+                for s2 in range(granularity[2]+1):
+                    for s3 in range(granularity[3]+1):
+                        for a in Actions.space:
+                            self.state_action_feature[(s0, s1, s2, s3, a)] = self.n_state_actions
+                            self.n_state_actions += 1
+        self.w = np.random.rand(self.n_state_actions + 1) * np.sqrt(1/(len(granularity) + 2))
 
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
@@ -168,21 +181,43 @@ class Agent(ABC, TunerMixin):
     def won(self):
         avg, _ = self.optimality()
         return avg > self.victory
+    
+    def x(self, state, action):
+        ind = self.state_action_feature[state + tuple([action])]
+        r = np.zeros(self.n_state_actions + 1)
+        r[ind] = 1.
+        r[-1] = 1.
+        return r
+
+    def q_hat(self, state, action):
+        return np.dot(self.x(state, action), self.w)
 
     def state_value(self, state):
-        return max(
-            self.value[state, Actions.left],
-            self.value[state, Actions.right],
-        )
+        if self.VFA:
+            return max([
+               self.q_hat(state, Actions.left),
+                self.q_hat(state, Actions.right),
+            ])
+        else:
+            return max(
+                self.value[state, Actions.left],
+                self.value[state, Actions.right],
+            )
 
     def greedy_action(self, state):
-        if self.value[state, Actions.left] == self.value[state, Actions.right]:
-            # if draw, select randomly
-            return Actions.sample()
-        return np.argmax([
-            self.value[state, Actions.left],
-            self.value[state, Actions.right],
-        ])
+        if self.VFA:
+            return np.argmax([
+                self.q_hat(state, Actions.left),
+                self.q_hat(state, Actions.right),
+            ])
+        else:
+            if self.value[state, Actions.left] == self.value[state, Actions.right]:
+                # if draw, select randomly
+                return Actions.sample()
+            return np.argmax([
+                self.value[state, Actions.left],
+                self.value[state, Actions.right],
+            ])
 
     def act(self):
         """eps-greedy policy"""
