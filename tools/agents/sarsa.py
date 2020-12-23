@@ -69,7 +69,7 @@ class Sarsa(Agent):
 
         # E(S, A) <- E(S, A) + 1
         if self.VFA:
-            self.eligibility[S[t], A[t]] += self.x(S[t], A[t])
+            self.eligibility[S[t], A[t]] += self.x(S[t])
         else:
             self.eligibility[S[t], A[t]] += 1
 

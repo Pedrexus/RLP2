@@ -23,7 +23,7 @@ granularity = [
 trials, best = Q.tune(env, space=[N0, granularity], seed=RANDOM_SEED, VFA=True)
 
 N0 = best.pop('N0')
-granularity = list(best.values())
+granularity = tuple(best.values())
 
 agent = Q.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED, VFA=True)
 

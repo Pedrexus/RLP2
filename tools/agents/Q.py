@@ -25,7 +25,7 @@ class Q(Agent):
                     R[t + 1]
                     + self.gamma * self.state_value(S[t + 1])
                     - self.q_hat(S[t], A[t])
-            ) * self.x(S[t],  A[t])
+            ) * self.x(S[t])
         else:
             self.value[S[t], A[t]] += self.alpha(S[t], A[t]) * (
                     R[t + 1]

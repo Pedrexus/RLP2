@@ -33,7 +33,7 @@ class MonteCarloControl(Agent):
             if (S[t], A[t]) not in zip(S[:t], A[:t]):  # first-visit
                 self.returns[S[t], A[t]].append(G)
                 if self.VFA:
-                    self.w += self.alpha(S[t], A[t]) * (mean(self.returns[S[t], A[t]])  - self.q_hat(S[t], A[t])) * self.x(S[t], A[t])
+                    self.w += self.alpha(S[t], A[t]) * (mean(self.returns[S[t], A[t]])  - self.q_hat(S[t], A[t])) * self.x(S[t])
                 else:
                     self.value[S[t], A[t]] = mean(self.returns[S[t], A[t]])  # average among all episodes
                 

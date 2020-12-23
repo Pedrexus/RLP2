@@ -62,16 +62,31 @@ class Agent(ABC, TunerMixin):
 
         # using value function approximator?
         self.VFA = VFA
-        self.state_action_feature = {}
-        self.n_state_actions = 0
-        for s0 in range(granularity[0]+1):
-            for s1 in range(granularity[1]+1):
-                for s2 in range(granularity[2]+1):
-                    for s3 in range(granularity[3]+1):
-                        for a in Actions.space:
-                            self.state_action_feature[(s0, s1, s2, s3, a)] = self.n_state_actions
-                            self.n_state_actions += 1
-        self.w = np.random.rand(self.n_state_actions + 1) * np.sqrt(1/(len(granularity) + 2))
+        self.state_action_feature = []
+        # length of x(S) and w
+        # starts at 1 because of the bias
+        self.n_state_actions = 1
+        # this list will be used to accelerate access to x(state)
+        digital_states = []
+        for s in granularity:
+            digital_states.append(range(s+1))
+            d = {}
+            for i in range(s+1):
+                d[i] = np.zeros(s+1)
+                d[i][i] = 1.
+            self.n_state_actions += s+1
+            self.state_action_feature.append(d)
+        
+        # dictionary to accelerate
+        self.x_d = {}
+        all_digital_states = list(product(*digital_states))
+        for state in all_digital_states:
+            self.x_d[state] = np.array([1])
+            for i, s in enumerate(state):
+                self.x_d[state] = np.concatenate((self.x_d[state], self.state_action_feature[i][s]))
+            self.x_d[state] = self.x_d[state].reshape(-1, 1)
+        # Initializing weights
+        self.w = np.random.rand(self.n_state_actions, len(Actions.space)) * np.sqrt(1/(len(granularity) + 2))
 
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
@@ -182,15 +197,11 @@ class Agent(ABC, TunerMixin):
         avg, _ = self.optimality()
         return avg > self.victory
     
-    def x(self, state, action):
-        ind = self.state_action_feature[state + tuple([action])]
-        r = np.zeros(self.n_state_actions + 1)
-        r[ind] = 1.
-        r[-1] = 1.
-        return r
+    def x(self, state):
+        return self.x_d[state]
 
     def q_hat(self, state, action):
-        return np.dot(self.x(state, action), self.w)
+        return np.dot(self.w.T, self.x(state))[action].item()
 
     def state_value(self, state):
         if self.VFA:
