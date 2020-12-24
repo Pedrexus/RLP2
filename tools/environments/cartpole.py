@@ -20,19 +20,14 @@ class FrictionCartPoleEnv(CartPoleEnv):
 
     def __init__(self):
         super().__init__()
-        self.mu_cart = .1  # cart friction coefficient < 1
-        self.mu_pole = .1  # pole friction coefficient < 1
+        self.mu_cart = 0.3  # cart friction coefficient < 1
+        self.mu_pole = 0.4  # pole friction coefficient < 1
 
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
 
-        try:
-            x, x_dot, theta, theta_dot, thetaacc = self.state
-        except ValueError:
-            # after reset(), state is 4-dim vector
-            x, x_dot, theta, theta_dot = self.state
-            thetaacc = self.np_random.uniform(low=-0.05, high=0.05)
+        x, x_dot, theta, theta_dot = self.state
 
         force = self.force_mag if action == 1 else -self.force_mag
         costheta = math.cos(theta)
@@ -42,11 +37,11 @@ class FrictionCartPoleEnv(CartPoleEnv):
         # https://coneural.org/florian/papers/05_cart_pole.pdf
 
         # TODO: fix the bug - quando mu é muito pequeno, o Q learning converge mais rapido do que o CartPole sem atrito e isso n faz sentido.
-        Nc = self.total_mass * self.gravity - self.polemass_length * (thetaacc * sintheta + theta_dot ** 2 * costheta)
-        friction = self.mu_cart * np.sign(Nc * x_dot)
+        friction = self.mu_cart * np.sign(x_dot)
 
         temp = (force + self.polemass_length * theta_dot ** 2 * (sintheta + friction * costheta)) / self.total_mass - self.gravity * friction
-        thetaacc = (self.gravity * sintheta - costheta * temp - self.mu_pole * x_dot / self.polemass_length) / (self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass * (costheta - friction)))
+        thetaacc = (self.gravity * sintheta - costheta * temp - self.mu_pole * theta_dot / self.polemass_length) / (self.length * (4.0 / 3.0 - self.masspole * costheta / self.total_mass * (costheta - friction)))
+        Nc = self.total_mass * self.gravity - self.polemass_length * (thetaacc * sintheta + theta_dot ** 2 * costheta)
         xacc = (force + self.polemass_length * (theta_dot ** 2 * sintheta - thetaacc * costheta) - Nc * friction) / self.total_mass
 
         if self.kinematics_integrator == 'euler':
@@ -60,7 +55,7 @@ class FrictionCartPoleEnv(CartPoleEnv):
             theta_dot = theta_dot + self.tau * thetaacc
             theta = theta + self.tau * theta_dot
 
-        self.state = (x, x_dot, theta, theta_dot, thetaacc)
+        self.state = (x, x_dot, theta, theta_dot)
 
         done = bool(
             x < -self.x_threshold
@@ -86,4 +81,4 @@ class FrictionCartPoleEnv(CartPoleEnv):
             self.steps_beyond_done += 1
             reward = 0.0
 
-        return np.array(self.state[:-1]), reward, done, {}
+        return np.array(self.state), reward, done, {}

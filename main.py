@@ -8,7 +8,7 @@ from tools.agents import Sarsa, Q, MonteCarloControl
 # Reproducibility
 RANDOM_SEED = 1234
 
-env = gym.make("CartPole-v1")
+env = gym.make("CartPole-friction-v1") 
 
 # lookup space
 N0 = hp.uniform('N0', 0, 1)
