@@ -80,8 +80,7 @@ class Agent(ABC, TunerMixin):
         
         # dictionary to accelerate
         self.x_d = {}
-        all_digital_states = list(product(*digital_states))
-        for state in all_digital_states:
+        for state in product(*digital_states):
             self.x_d[state] = np.array([1])
             for i, s in enumerate(state):
                 self.x_d[state] = np.concatenate((self.x_d[state], self.state_action_feature[i][s]))
