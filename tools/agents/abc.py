@@ -35,6 +35,7 @@ class Agent(ABC, TunerMixin):
     #     1       Cart Velocity             -Inf                    Inf
     #     2       Pole Angle                -0.418 rad (-24 deg)    0.418 rad (24 deg)
     #     3       Pole Angular Velocity     -Inf                    Inf
+    names = ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity"]
     upper_bounds = [+4.8, +1.0, +math.radians(12), math.radians(50)]
     lower_bounds = [-4.8, -1.0, -math.radians(12), -math.radians(50)]
 
@@ -285,7 +286,11 @@ class Agent(ABC, TunerMixin):
         return value.reshape([x for x in shape if x > 1])
 
     def plot_colormesh(self, axis=0):
-        plt.pcolormesh(self.state_value_array)
+        y_ticks, x_ticks = [space for i, space in enumerate(self.state_space) if self.granularity[i] > 0]
+        x_ticks_degrees = [math.degrees(x) for x in x_ticks]
+        y_ticks_degrees = [math.degrees(y) for y in y_ticks]
+
+        plt.pcolormesh(x_ticks_degrees, y_ticks_degrees, self.state_value_array)
         plt.colorbar()
         plt.show()
 
