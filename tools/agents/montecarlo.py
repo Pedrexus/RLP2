@@ -35,8 +35,4 @@ class MonteCarloControl(Agent):
                 if self.VFA:
                     self.w += self.alpha(S[t], A[t]) * (mean(self.returns[S[t], A[t]])  - self.q_hat(S[t], A[t])) * self.x(S[t])
                 else:
-                    self.value[S[t], A[t]] = mean(self.returns[S[t], A[t]])  # average among all episodes
-                
-                    # a professora pediu assim, mas dai piora muito...
-                    # se usar mean(returns) melhora um pouco
-                    # self.value[S[t], A[t]] += self.alpha(S[t], A[t]) * (mean(self.returns[S[t], A[t]]) - self.value[S[t], A[t]])
+                    self.value[S[t], A[t]] += self.alpha(S[t], A[t]) * (mean(self.returns[S[t], A[t]]) - self.value[S[t], A[t]])
