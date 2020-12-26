@@ -1,3 +1,3 @@
 from .montecarlo import MonteCarloControl
 from .sarsa import Sarsa
-from .Q import Q, DoubleQ
+from .Q import Q
