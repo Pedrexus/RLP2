@@ -36,8 +36,8 @@ class Agent(ABC, TunerMixin):
     #     2       Pole Angle                -0.418 rad (-24 deg)    0.418 rad (24 deg)
     #     3       Pole Angular Velocity     -Inf                    Inf
     names = ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity"]
-    upper_bounds = [+4.8, +1.0, +math.radians(12), math.radians(50)]
-    lower_bounds = [-4.8, -1.0, -math.radians(12), -math.radians(50)]
+    upper_bounds = [+4.8, +1.0, +math.radians(20), math.radians(50)]
+    lower_bounds = [-4.8, -1.0, -math.radians(20), -math.radians(50)]
 
     # online learning agent:
     # online = True => policy evaluation is performed after each step
@@ -284,27 +284,44 @@ class Agent(ABC, TunerMixin):
 
         return value.reshape([x for x in shape if x > 1])
 
-    def plot_colormesh(self, axis=0):
+    def ticks(self):
         y_ticks, x_ticks = [space for i, space in enumerate(self.state_space) if self.granularity[i] > 0]
         x_ticks_degrees = [math.degrees(x) for x in x_ticks]
         y_ticks_degrees = [math.degrees(y) for y in y_ticks]
 
-        plt.pcolormesh(x_ticks_degrees, y_ticks_degrees, self.state_value_array)
+        return x_ticks_degrees, y_ticks_degrees
+
+    def plot_colormesh(self):
+        assert tuple(self.granularity[:2]) == (0, 0), "Do not plot cart position or cart velocity"
+
+        x_ticks_degrees, y_ticks_degrees = self.ticks()
+        plt.pcolormesh(x_ticks_degrees, y_ticks_degrees, self.state_value_array[1:, 1:], shading='auto')
         plt.colorbar()
+
+        plt.xlabel(r"angular velocity ($\dot{\theta}}$)")
+        plt.ylabel(r"angle ($\theta$)")
+
         plt.show()
 
-    def plot_surface(self, axis=0, *args, **kwargs):
-        shape = self.state_value_array.shape
-        assert len(shape) == 2, f"Unable to make surface of tensor with rank {shape}"
+    def plot_surface(self):
+        assert tuple(self.granularity[:2]) == (0, 0), "Do not plot cart position or cart velocity"
 
-        x, y = np.meshgrid(range(shape[0]), range(shape[1]))
-        z = self.state_value_array
+        x_ticks_degrees, y_ticks_degrees = self.ticks()
+        x, y = np.meshgrid(x_ticks_degrees, y_ticks_degrees)
+        z = self.state_value_array[1:, 1:]
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         surface = ax.plot_surface(x, y, z, rstride=1, cstride=1, linewidth=0, cmap='viridis', antialiased=False)
-        fig.colorbar(surface, shrink=0.5, aspect=5)
+        # fig.colorbar(surface, shrink=0.5, aspect=5)
+
+        ax.set_xlabel(r"angular velocity ($\dot{\theta}}$)")
+        ax.set_ylabel(r"angle ($\theta$)")
+        ax.set_zlabel(r"$V^* (S)$")
+
         plt.show()
+
+        return fig, ax
 
 
 # deprecated
