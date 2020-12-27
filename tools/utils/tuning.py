@@ -7,7 +7,7 @@ from hyperopt import tpe, STATUS_OK, Trials, fmin
 class TunerMixin:
     """Hyperparameter tuning"""
 
-    epochs = 20_000
+    epochs = 50_000
 
     @classmethod
     def routine(cls, env, hyparams, seed, VFA=False):
