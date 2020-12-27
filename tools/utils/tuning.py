@@ -53,6 +53,6 @@ class TunerMixin:
 
         trials = Trials()
 
-        best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals, trials=trials)
+        best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals, trials=trials, rstate=seed)
 
         return trials, best
