@@ -69,7 +69,8 @@ class Sarsa(Agent):
 
         # E(S, A) <- E(S, A) + 1
         if self.VFA:
-            self.eligibility[S[t], A[t]] += self.x(S[t])
+            features = np.array([self.x(S[t], A[t])])
+            self.eligibility[S[t], A[t]][features] += 1
         else:
             self.eligibility[S[t], A[t]] += 1
 
@@ -79,7 +80,7 @@ class Sarsa(Agent):
         for s, a in self.eligibility.keys():
             # Q(s, a) <- Q(s, a) + alpha * delta * E(s, a)
             if self.VFA:
-                self.w += self.alpha(s, a) * delta * self.eligibility[s, a]
+                self.w += self.static_alpha * delta * self.eligibility[s, a]
             else:
                 self.value[s, a] += self.alpha(s, a) * delta * self.eligibility[s, a]
             # E(s, a) <- gamma * lambda * E(s, a)

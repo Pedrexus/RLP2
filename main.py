@@ -15,19 +15,19 @@ env = gym.make("CartPole-v1")
 # lookup space
 N0 = hp.uniform('N0', 0, 1)
 granularity = [
-    0,  # hp.randint('cart_position', 5),  # btw 0 and 5 5
-    0,  # hp.randint('cart_velocity', 5),
+    hp.randint('cart_position', 1),  # btw 0 and 5 5
+    hp.randint('cart_velocity', 1),
     hp.randint('pole_angle', 16),
     hp.randint('pole_angular_velocity', 16),
 ]
 
 # hyperparameter tuning
-# trials, best = MonteCarloControl.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
+trials, best = Sarsa.tune(env, space=[N0, granularity], seed=RANDOM_SEED, VFA=True)
 
-N0 = .5  # best.pop('N0')
-granularity = (0, 0, 12, 12)  # [0, 0, *best.values()]
+N0 = best.pop('N0')
+granularity = tuple([*best.values()])
 
-agent = MonteCarloControl.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED)
+agent = Sarsa.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED, VFA=True)
 
 print(f"best result = {agent.optimality()[0]} in {len(agent.episodes)} episodes with N0 = {N0} and granularity = {granularity}")
 

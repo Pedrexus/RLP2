@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..utils.tuning import TunerMixin
+from ..utils.tile import IHT, tiles
 
 
 class Actions:
@@ -44,7 +45,7 @@ class Agent(ABC, TunerMixin):
     # online = False => policy evaluation is performed after each episode
     online = False
 
-    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), VFA=False, initial_value=0, gamma=.8):
+    def __init__(self, N0=.1, granularity=(2, 2, 3, 6), VFA=False, initial_value=0, gamma=.8, num_tilings = 8, max_size = 4096):
         self._seed = None
 
         self.episodes = defaultdict(lambda: dict(states=[], actions=[], rewards=[]))
@@ -63,30 +64,11 @@ class Agent(ABC, TunerMixin):
 
         # using value function approximator?
         self.VFA = VFA
-        self.state_action_feature = []
-        # length of x(S) and w
-        # starts at 1 because of the bias
-        self.n_state_actions = 1
-        # this list will be used to accelerate access to x(state)
-        digital_states = []
-        for s in granularity:
-            digital_states.append(range(s+1))
-            d = {}
-            for i in range(s+1):
-                d[i] = np.zeros(s+1)
-                d[i][i] = 1.
-            self.n_state_actions += s+1
-            self.state_action_feature.append(d)
-        
-        # dictionary to accelerate
-        self.x_d = {}
-        for state in product(*digital_states):
-            self.x_d[state] = np.array([1])
-            for i, s in enumerate(state):
-                self.x_d[state] = np.concatenate((self.x_d[state], self.state_action_feature[i][s]))
-            self.x_d[state] = self.x_d[state].reshape(-1, 1)
-        # Initializing weights
-        self.w = np.random.rand(self.n_state_actions, len(Actions.space)) * np.sqrt(1/(len(granularity) + 2))
+        self.num_tilings = num_tilings
+        self.static_alpha = gamma / num_tilings
+        self.iht = IHT(max_size)
+        self.w = np.zeros(max_size)
+        self.scale = [self.num_tilings / (gran + 1) for gran in self.granularity]
 
         # the reward expected from taking action A when in state S
         self.value = defaultdict(lambda: initial_value)
@@ -197,17 +179,21 @@ class Agent(ABC, TunerMixin):
         avg, _ = self.optimality()
         return avg > self.victory
     
-    def x(self, state):
-        return self.x_d[state]
+    def x(self, state, action):
+        featurized = tiles(self.iht, self.num_tilings, 
+                            [sca * sta for sca, sta in zip(self.scale, state)], 
+                            [action])
+        return featurized
 
     def q_hat(self, state, action):
-        return np.dot(self.w.T, self.x(state))[action].item()
+        features = [self.x(state, action)]
+        return np.array([np.sum(self.w[f]) for f in features]).item()
 
     def state_value(self, state):
         if self.VFA:
             return max([
                self.q_hat(state, Actions.left),
-                self.q_hat(state, Actions.right),
+               self.q_hat(state, Actions.right),
             ])
         else:
             return max(

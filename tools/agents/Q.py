@@ -1,7 +1,7 @@
 import random
 from collections import defaultdict
 
-from numpy import argmax
+from numpy import argmax, array
 
 from .abc import Agent, Actions
 
@@ -21,11 +21,12 @@ class Q(Agent):
         # assert len(S) == len(A) + 1 == len(R), f"S: {len(S)} A: {len(A)} R: {len(R)}"
 
         if self.VFA:
-            self.w += self.alpha(S[t], A[t]) * (
+            features = array([self.x(S[t], A[t])])
+            self.w[features] += self.static_alpha * (
                     R[t + 1]
                     + self.gamma * self.state_value(S[t + 1])
                     - self.q_hat(S[t], A[t])
-            ) * self.x(S[t])
+            )
         else:
             self.value[S[t], A[t]] += self.alpha(S[t], A[t]) * (
                     R[t + 1]
