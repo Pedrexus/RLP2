@@ -77,7 +77,6 @@ class Agent(ABC, TunerMixin):
     def seed(self, seed):
         self._seed = seed
         random.seed(seed)
-        np.random.seed(seed)
 
     @property
     def episode(self):

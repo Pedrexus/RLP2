@@ -12,25 +12,16 @@ RANDOM_SEED = 1234
 
 env = gym.make("CartPole-v1")
 
-# lookup space
+# slow: ~3min
 N0 = hp.uniform('N0', 0, 1)
-granularity = [
-    hp.randint('cart_position', 1),  # btw 0 and 5 5
-    hp.randint('cart_velocity', 1),
-    hp.randint('pole_angle', 16),
-    hp.randint('pole_angular_velocity', 16),
-]
+granularity = [0, 0, hp.randint('pole_angle', 20), hp.randint('pole_angular_velocity', 20)]
 
-# hyperparameter tuning
-trials, best = Sarsa.tune(env, space=[N0, granularity], seed=RANDOM_SEED, VFA=True)
+trials, best = Q.tune(env, space=[N0, granularity], seed=RANDOM_SEED)
 
-N0 = best.pop('N0')
-granularity = tuple([*best.values()])
+N0, granularity = best.pop('N0'), [0, 0, *best.values()]
+agent = Q.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED)
 
-agent = Sarsa.routine(env, hyparams=(N0, granularity), seed=RANDOM_SEED, VFA=True)
-
-print(f"best result = {agent.optimality()[0]} in {len(agent.episodes)} episodes with N0 = {N0} and granularity = {granularity}")
-
+print(f"best result = {agent.optimality()[0]} in {len(agent.episodes)} episodes with N0 = {agent.N0:.2f} and granularity = {agent.granularity}")
 agent.plot_colormesh()
 agent.plot_surface()
 
