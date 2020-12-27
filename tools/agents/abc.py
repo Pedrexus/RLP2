@@ -271,6 +271,8 @@ class Agent(ABC, TunerMixin):
         return value.reshape([x for x in shape if x > 1])
 
     def ticks(self):
+        assert tuple(self.granularity[:2]) == (0, 0), "Do not plot cart position or cart velocity"
+
         y_ticks, x_ticks = [space for i, space in enumerate(self.state_space) if self.granularity[i] > 0]
         x_ticks_degrees = [math.degrees(x) for x in x_ticks]
         y_ticks_degrees = [math.degrees(y) for y in y_ticks]
