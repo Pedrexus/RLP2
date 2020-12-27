@@ -1,5 +1,6 @@
 import time
 
+import numpy
 from hyperopt import tpe, STATUS_OK, Trials, fmin
 
 
@@ -53,6 +54,7 @@ class TunerMixin:
 
         trials = Trials()
 
-        best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals, trials=trials, rstate=seed)
+        rstate = numpy.random.RandomState(seed)
+        best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals, trials=trials, rstate=rstate)
 
         return trials, best
