@@ -1,11 +1,11 @@
-# 🤖 RLP1
-Reinforcement Learning Project 1 🦾
+# 🤖 RLP2
+Reinforcement Learning Project 2 🦾
 
 
 ## Create environment
 
 ```
-git clone https://github.com/Pedrexus/RLP1.git
+git clone https://github.com/Pedrexus/RLP2.git
 cd RLP1
 python -m venv venv
 ```
