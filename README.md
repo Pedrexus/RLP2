@@ -23,3 +23,7 @@ python -m venv venv
 
 `python script.py`
 
+## References
+
+- [deep Q-learning article](https://becominghuman.ai/lets-build-an-atari-ai-part-1-dqn-df57e8ff3b26)
+- [openai spinning up](https://spinningup.openai.com/en/latest/index.html)

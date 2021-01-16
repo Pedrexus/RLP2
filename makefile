@@ -1,5 +1,8 @@
 install:
-	pip install -U -r requirements.txt
+	pip install -r requirements.txt
+
+install-mac:
+	brew install cmake openmpi
 
 try:
 	python try.py

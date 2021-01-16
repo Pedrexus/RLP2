@@ -1,5 +1,10 @@
-gym[atari]
-numpy<=1.19.3
-matplotlib
-hyperopt
 cached-property
+gym[atari]
+hyperopt
+matplotlib
+numpy<=1.19.3
+# pytorch
+stable-baselines3[extra]
+
+# if error, also install
+# pyglet==1.5.11
